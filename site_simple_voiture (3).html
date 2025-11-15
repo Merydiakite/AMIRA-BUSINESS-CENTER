@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AMIRA-BIUSINESS CENTER</title>
+<style>
+  :root{--brand:#1a73e8;--bg:#f2f2f2}
+  body { font-family: Arial, sans-serif; margin:0; padding:0; background:var(--bg); color:#111 }
+  header { background:var(--brand); padding:18px; color:#fff; text-align:center }
+  header h1{margin:0;font-size:20px}
+  .container { max-width:1100px; margin:18px auto; padding:0 16px }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:16px }
+  .card { background:#fff; border-radius:10px; padding:12px; box-shadow:0 3px 8px rgba(0,0,0,0.08) }
+  .card img{ width:100%; height:160px; object-fit:cover; border-radius:8px }
+  .card h3{ margin:10px 0 6px }
+  .price{ color: #e60000; font-weight:700 }
+  .card button { margin-top:6px; background:#25D366; padding:8px; border:none; border-radius:6px; color:#fff; cursor:pointer; width:100%; }
+
+  .admin-panel { background:#fff; margin-top:22px; padding:14px; border-radius:10px; box-shadow:0 3px 8px rgba(0,0,0,0.06) }
+  input, textarea { width:100%; padding:8px; margin:6px 0; border-radius:6px; border:1px solid #ccc }
+  button.main-btn { background:var(--brand); color:#fff; border:none; padding:10px 12px; border-radius:6px; cursor:pointer }
+  .floating-admin { position:fixed; right:18px; bottom:18px; background:#d32f2f; color:#fff; padding:12px 16px; border-radius:999px; box-shadow:0 6px 18px rgba(0,0,0,0.2); cursor:pointer }
+  .hidden{ display:none }
+  .muted{ color:#666 }
+  @media (max-width:600px){ .card img{ height:140px } }
+</style>
+</head>
+<body>
+<header>
+  <h1>AMIRA-BIUSINESS CENTER — Magasin de Voitures</h1>
+</header>
+<main id="home" class="container">
+  <h2>Nos Voitures</h2>
+  <div id="carList" class="grid" aria-live="polite"></div>
+
+  <div class="admin-panel">
+    <h3>Ajouter une voiture (rapide)</h3>
+    <input type="text" id="marque" placeholder="Marque" />
+    <input type="text" id="modele" placeholder="Modèle" />
+    <input type="number" id="prix" placeholder="Prix (FCFA)" />
+    <input type="file" id="image" accept="image/*" />
+    <textarea id="desc" placeholder="Description"></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+      <button id="addQuickBtn" class="main-btn">Ajouter</button>
+      <button id="openAdminDetailed" type="button" class="main-btn">Ouvrir Administration</button>
+    </div>
+    <p class="muted" style="margin-top:10px">Utilise le panneau d'administration pour des options avancées.</p>
+  </div>
+</main>
+<section id="admin" class="hidden container" style="margin-top:10px">
+  <div class="admin-panel">
+    <h2>Administration — Ajouter une voiture</h2>
+    <form id="adminForm">
+      <label>Image</label>
+      <input type="file" id="carImage" accept="image/*" />
+      <label>Nom de la voiture</label>
+      <input type="text" id="carName" placeholder="Toyota Corolla 2020" />
+      <label>Prix (FCFA)</label>
+      <input type="number" id="carPrice" placeholder="15000000" />
+      <label>Description</label>
+      <textarea id="carDesc" placeholder="État impeccable, faible kilométrage..."></textarea>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+        <button id="addCarBtn" type="button" class="main-btn">Ajouter la Voiture</button>
+        <button id="backHome" type="button" style="background:#666">Retour au Site</button>
+      </div>
+    </form>
+  </div>
+</section>
+<button id="adminToggle" class="floating-admin">Administration</button>
+<script>
+let cars = [];
+try{ const saved = localStorage.getItem('amira_cars'); if(saved) cars = JSON.parse(saved); } catch(e){ console.warn('Impossible de lire les données sauvegardées', e); }
+
+const carList = document.getElementById('carList');
+const addQuickBtn = document.getElementById('addQuickBtn');
+const openAdminDetailed = document.getElementById('openAdminDetailed');
+const adminSection = document.getElementById('admin');
+const home = document.getElementById('home');
+const adminToggle = document.getElementById('adminToggle');
+const addCarBtn = document.getElementById('addCarBtn');
+const backHome = document.getElementById('backHome');
+
+function renderCars(){
+  if(!carList) return;
+  carList.innerHTML = '';
+  if(cars.length === 0){ carList.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#666">Aucune annonce pour le moment</div>'; return; }
+  cars.forEach((c,i)=>{
+    const el = document.createElement('article');
+    el.className='card';
+    let title = c.marque ? c.marque + ' ' + (c.modele||'') : (c.name||'');
+    el.innerHTML = `
+      <img src="${c.image||'https://via.placeholder.com/600x400?text=Photo'}" alt="${title}" />
+      <h3>${title}</h3>
+      <div class="price">${c.prix||c.price||''} FCFA</div>
+      <p class="muted">${c.desc||c.description||''}</p>
+      <button onclick="window.open('https://wa.me/2250713131355?text=Bonjour,+je+suis+intéressé+par+la+voiture+${encodeURIComponent(title)}','_blank')">Contacter sur WhatsApp</button>
+    `;
+    carList.appendChild(el);
+  });
+}
+
+function save(){ try{ localStorage.setItem('amira_cars', JSON.stringify(cars)); } catch(e){ console.warn(e); } }
+
+addQuickBtn.addEventListener('click', ()=>{
+  const marque = document.getElementById('marque').value.trim();
+  const modele = document.getElementById('modele').value.trim();
+  const prix = document.getElementById('prix').value.trim();
+  const imageFile = document.getElementById('image').files[0];
+  const desc = document.getElementById('desc').value.trim();
+  if(!marque||!modele||!prix){ alert('Veuillez remplir au moins marque, modèle et prix.'); return; }
+  if(imageFile){ const reader = new FileReader(); reader.onload=()=>{ cars.push({marque,modele,prix,image:reader.result,desc}); save(); renderCars(); document.getElementById('marque').value=''; document.getElementById('modele').value=''; document.getElementById('prix').value=''; document.getElementById('image').value=''; document.getElementById('desc').value=''; alert('Voiture ajoutée'); }; reader.readAsDataURL(imageFile); return; }
+  cars.push({marque,modele,prix,image:'',desc}); save(); renderCars(); document.getElementById('marque').value=''; document.getElementById('modele').value=''; document.getElementById('prix').value=''; document.getElementById('image').value=''; document.getElementById('desc').value=''; alert('Voiture ajoutée');
+});
+
+addCarBtn.addEventListener('click', ()=>{
+  const imageFile2 = document.getElementById('carImage').files[0];
+  const name = document.getElementById('carName').value.trim();
+  const price = document.getElementById('carPrice').value.trim();
+  const desc = document.getElementById('carDesc').value.trim();
+  if(imageFile2){ const reader2 = new FileReader(); reader2.onload=()=>{ cars.push({image:reader2.result,name,price,desc}); save(); renderCars(); document.getElementById('adminForm').reset(); alert('Voiture ajoutée avec succès !'); }; reader2.readAsDataURL(imageFile2); return; }
+  cars.push({image:'',name,price,desc}); save(); renderCars(); document.getElementById('adminForm').reset(); alert('Voiture ajoutée avec succès !');
+});
+
+adminToggle.addEventListener('click', ()=>{ if(adminSection.classList.contains('hidden')){ adminSection.classList.remove('hidden'); home.classList.add('hidden'); window.scrollTo(0,0); }else{ adminSection.classList.add('hidden'); home.classList.remove('hidden'); } });
+openAdminDetailed.addEventListener('click', ()=>{ adminSection.classList.remove('hidden'); home.classList.add('hidden'); window.scrollTo(0,0); });
+backHome.addEventListener('click', ()=>{ adminSection.classList.add('hidden'); home.classList.remove('hidden'); });
+
+renderCars();
+</script>
+</body>
+</html>
